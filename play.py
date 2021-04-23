@@ -15,10 +15,10 @@ def create_winning_patterns(size: int) -> list:
     """
     patterns = []
     for i in range(size):
-        patterns.append([j+i*size for j in range(size)])
-        patterns.append([i+j*size for j in range(size)])
-    patterns.append([i*size+i for i in range(size)])
-    patterns.append([i*(size-1)+(size-1) for i in range(size)])
+        patterns.append([j + i * size for j in range(size)])
+        patterns.append([i + j * size for j in range(size)])
+    patterns.append([i * size + i for i in range(size)])
+    patterns.append([i * (size - 1) + (size - 1) for i in range(size)])
     return patterns
 
 
@@ -30,7 +30,7 @@ def print_game_matrix(size: int, array: list) -> None:
     :param array: The game array holding all player turns
     """
     print("\n")
-    for i in range(size*size):
+    for i in range(size * size):
         print(f"{i}:{array[i]}   ", end="")
         if (i + 1) % size == 0:
             print("\n")
@@ -60,6 +60,7 @@ def position_input(prompt: str, array_size: int) -> int:
 @dataclass
 class Player:
     """Player class holding their name and symbol"""
+
     name: str
     symbol: str
 
@@ -73,7 +74,7 @@ def start_game():
     # Size of the game matrix, preset for now
     size = 3
     # An array, where all items are ` ` to start with
-    game_array = [" " for i in range(size*size)]
+    game_array = [" " for i in range(size * size)]
     # Fetch all the winning patterns. We'll compare this at the end of the turn.
     winning_patterns = create_winning_patterns(size)
 
@@ -84,14 +85,22 @@ def start_game():
 
         print_game_matrix(size, game_array)
 
-        position = position_input(f"Turn of {current_player.name}, enter target position [{current_player.symbol}]: ", len(game_array))
+        position = position_input(
+            f"Turn of {current_player.name}, enter target position [{current_player.symbol}]: ",
+            len(game_array),
+        )
 
         # Check if the position is taken already
         if game_array[position] != " ":
             while game_array[position] != " ":
-                position = position_input(f"Position already taken! Enter target position [{current_player.symbol}]: ", len(game_array))
+                position = position_input(
+                    f"Position already taken! Enter target position [{current_player.symbol}]: ",
+                    len(game_array),
+                )
 
-        print(f"\n{current_player.name} placed {current_player.symbol} in position {position}.")
+        print(
+            f"\n{current_player.name} placed {current_player.symbol} in position {position}."
+        )
         game_array[position] = current_player.symbol
 
         if turn >= size + (size - 1):
@@ -110,6 +119,7 @@ def start_game():
             if all([pos != " " for pos in game_array]):
                 print("\nNo winner! Play again.")
                 break
+
 
 if __name__ == "__main__":
     start_game()
