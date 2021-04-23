@@ -1,5 +1,16 @@
 # Tic-Tac-Toe
 
+Two player tic-tac-toe.
+
+Requires Python 3.6+.
+
+### To play
+
+Run this command -
+```
+python3 play.py
+```
+
 ### Assumptions
 - 2 player game
   - can it support 2+ players? maybe for bigger matrix than 3x3
