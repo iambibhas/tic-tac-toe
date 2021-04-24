@@ -78,6 +78,7 @@ class Player:
 @dataclass
 class Game:
     """Game object to store the state and methods"""
+
     size: int
     players: list
     game_array: list
