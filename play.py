@@ -22,18 +22,28 @@ def create_winning_patterns(size: int) -> list:
     return patterns
 
 
-def print_game_matrix(size: int, array: list) -> None:
+def get_game_matrix(size: int, game_array: list) -> None:
+    matrix = []
+    for i in range(size):
+        row = []
+        for j in range(size):
+            cell_number = i * size + j
+            row.append(f"{cell_number}:{game_array[cell_number]}   ")
+        matrix.append(row)
+    return matrix
+
+
+def print_game_matrix(size: int, game_array: list) -> None:
     """
     Pretty prints the current game matrix.
 
     :param size: Size of the game matrix
-    :param array: The game array holding all player turns
+    :param game_array: The game array holding all player turns
     """
-    print("\n")
-    for i in range(size * size):
-        print(f"{i}:{array[i]}   ", end="")
-        if (i + 1) % size == 0:
-            print("\n")
+    print("")
+    matrix = get_game_matrix(size, game_array)
+    for row in matrix:
+        print("".join(row))
 
 
 def position_input(prompt: str, array_size: int) -> int:
@@ -63,6 +73,33 @@ class Player:
 
     name: str
     symbol: str
+
+
+@dataclass
+class Game:
+    """Game object to store the state and methods"""
+    size: int
+    players: list
+    game_array: list
+    winning_patterns: list
+    num_players: int
+    turn: int
+
+    def __init__(self, size, num_players):
+        self.turn = 0
+        self.num_players = 2
+        self.game_array = [" " for i in range(size ** 2)]
+        self.winning_patterns = create_winning_patterns(size)
+
+        player1 = Player(name="Player 1", symbol="O")
+        player2 = Player(name="Player 2", symbol="X")
+        self.players = [player1, player2]
+
+    def current_player(self, turn: int) -> Player:
+        return self.players[(turn % len(self.players)) - 1]
+
+    def get_current_state(self):
+        print_game_matrix(self.size, self.game_array)
 
 
 def start_game():
