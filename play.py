@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+class MoveException(Exception):
+    pass
 
 
 def create_winning_patterns(size: int) -> list:
@@ -46,36 +47,17 @@ def print_game_matrix(size: int, game_array: list) -> None:
         print("".join(row))
 
 
-def position_input(prompt: str, array_size: int) -> int:
-    """
-    Ensures that an integer input within the given range of the game array size is accepted.
-
-    :param prompt: Input prompt to show
-    :param array_size: Size of the game matrix
-    """
-    message = f"Invalid position! It must be an integer between 0-{array_size - 1}."
-    value = input(prompt)
-    try:
-        value = int(value)
-    except ValueError:
-        print(message)
-        return position_input(prompt, array_size)
-    if 0 <= value < array_size:
-        return value
-    else:
-        print(message)
-        return position_input(prompt, array_size)
-
-
-@dataclass
 class Player:
     """Player class holding their name and symbol"""
 
     name: str
     symbol: str
 
+    def __init__(self, name, symbol):
+        self.name = name
+        self.symbol = symbol
 
-@dataclass
+
 class Game:
     """Game object to store the state and methods"""
 
@@ -85,79 +67,105 @@ class Game:
     winning_patterns: list
     num_players: int
     turn: int
+    winner: Player
 
     def __init__(self, size, num_players):
-        self.turn = 0
+        self.size = size
+        self.turn = 1
         self.num_players = 2
         self.game_array = [" " for i in range(size ** 2)]
         self.winning_patterns = create_winning_patterns(size)
+        self.winner = None
 
         player1 = Player(name="Player 1", symbol="O")
         player2 = Player(name="Player 2", symbol="X")
         self.players = [player1, player2]
 
-    def current_player(self, turn: int) -> Player:
-        return self.players[(turn % len(self.players)) - 1]
+    @property
+    def current_player(self) -> Player:
+        return self.players[(self.turn % len(self.players)) - 1]
 
     def get_current_state(self):
         print_game_matrix(self.size, self.game_array)
 
+    def is_position_taken(self, position):
+        return self.game_array[position] != " "
 
-def start_game():
-    # Name and order of the players are preset for now
-    player1 = Player(name="Player 1", symbol="O")
-    player2 = Player(name="Player 2", symbol="X")
-    players = [player1, player2]
+    def is_winning_move(self):
+        win = False
+        for pattern in self.winning_patterns:
+            if all(
+                [self.game_array[pos] == self.current_player.symbol for pos in pattern]
+            ):
+                win = True
+                self.winner = self.current_player
+        return win
 
-    # Size of the game matrix, preset for now
-    size = 3
-    # An array, where all items are ` ` to start with
-    game_array = [" " for i in range(size * size)]
-    # Fetch all the winning patterns. We'll compare this at the end of the turn.
-    winning_patterns = create_winning_patterns(size)
+    def is_end_of_game(self):
+        return self.is_winning_move() or all([pos != " " for pos in self.game_array])
 
-    turn = 0
+    def make_move(self, position) -> bool:
+        if self.is_position_taken(position):
+            raise MoveException("Position already taken")
+        self.game_array[position] = self.current_player.symbol
+
+        if self.is_end_of_game():
+            return True
+        else:
+            self.turn += 1
+            return False
+
+
+def position_input(prompt: str, game: Game) -> int:
+    """
+    Ensures that an integer input within the given range of the game array size is accepted.
+
+    :param prompt: Input prompt to show
+    :param array_size: Size of the game matrix
+    """
+    array_size = len(game.game_array)
+    message = f"Invalid position! It must be an integer between 0-{array_size - 1}."
+    value = input(prompt)
+
+    try:
+        value = int(value)
+    except ValueError:
+        print(message)
+        return position_input(prompt, game)
+
+    if 0 <= value < array_size:
+        while game.is_position_taken(value):
+            value = position_input(
+                prompt=f"Position is taken! Enter target position [{game.current_player.symbol}]: ",
+                game=game,
+            )
+        return value
+    else:
+        print(message)
+        return position_input(prompt, game)
+
+
+def play_game():
+    game = Game(3, 2)
+
     while True:
-        turn += 1
-        current_player = players[turn % len(players) - 1]
-
-        print_game_matrix(size, game_array)
+        print_game_matrix(game.size, game.game_array)
 
         position = position_input(
-            f"Turn of {current_player.name}, enter target position [{current_player.symbol}]: ",
-            len(game_array),
+            prompt=f"Turn of {game.current_player.name}, enter target position [{game.current_player.symbol}]: ",
+            game=game,
         )
 
-        # Check if the position is taken already
-        if game_array[position] != " ":
-            while game_array[position] != " ":
-                position = position_input(
-                    f"Position already taken! Enter target position [{current_player.symbol}]: ",
-                    len(game_array),
-                )
+        end_of_game = game.make_move(position)
 
-        print(
-            f"\n{current_player.name} placed {current_player.symbol} in position {position}."
-        )
-        game_array[position] = current_player.symbol
-
-        if turn >= size + (size - 1):
-            # it'll take at least `size + (size - 1)` turns for the starting user to
-            # reach a winning patterns if not blocked by the other user
-            win = False
-            for pattern in winning_patterns:
-                if all([game_array[pos] == current_player.symbol for pos in pattern]):
-                    win = True
-
-            if win:
-                print_game_matrix(size, game_array)
-                print(f"{current_player.name} wins!")
-                break
-
-            if all([pos != " " for pos in game_array]):
+        if end_of_game:
+            if game.winner is not None:
+                print(f"{game.current_player.name} wins!")
+            else:
                 print("\nNo winner! Play again.")
-                break
+            break
 
 
 if __name__ == "__main__":
-    start_game()
+    # start_game()
+    play_game()
