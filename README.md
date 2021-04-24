@@ -11,6 +11,12 @@ Run this command -
 python3 play.py
 ```
 
+### To test
+```
+pip install -r test_requirements.txt
+pytest
+```
+
 ### Assumptions
 - 2 player game
   - can it support 2+ players? maybe for bigger matrix than 3x3
@@ -24,4 +30,3 @@ python3 play.py
 - The game ends when one player has occupied a winning patterns, no further input allowed
 - Once a cell is occupied, it is immutable
 - When it's the turn of player X, player Y cannot send an input, the board has to be locked for Y
--

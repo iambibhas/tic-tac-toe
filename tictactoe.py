@@ -45,6 +45,7 @@ def print_game_matrix(size: int, game_array: list) -> None:
     matrix = get_game_matrix(size, game_array)
     for row in matrix:
         print("".join(row))
+    print("")
 
 
 class Player:
@@ -186,5 +187,4 @@ def play_game():
 
 
 if __name__ == "__main__":
-    # start_game()
     play_game()
