@@ -6,9 +6,18 @@ Requires Python 3.6+.
 
 ### To play
 
-Run this command -
+Run this command to start a 2 player game, where each player take turn to input their position -
 ```
-python3 play.py
+python3 tictactoe.py
+```
+
+To play against the AI, run
+```
+python3 tictactoe.py --against-ai
+```
+or
+```
+python3 tictactoe.py -a
 ```
 
 ### To test

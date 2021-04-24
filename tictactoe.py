@@ -1,3 +1,12 @@
+import argparse
+import random
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-a", "--against-ai", help="play against AI", action="store_true")
+parser.parse_args()
+
+
 class MoveException(Exception):
     pass
 
@@ -23,40 +32,17 @@ def create_winning_patterns(size: int) -> list:
     return patterns
 
 
-def get_game_matrix(size: int, game_array: list) -> None:
-    matrix = []
-    for i in range(size):
-        row = []
-        for j in range(size):
-            cell_number = i * size + j
-            row.append(f"{cell_number}:{game_array[cell_number]}   ")
-        matrix.append(row)
-    return matrix
-
-
-def print_game_matrix(size: int, game_array: list) -> None:
-    """
-    Pretty prints the current game matrix.
-
-    :param size: Size of the game matrix
-    :param game_array: The game array holding all player turns
-    """
-    print("")
-    matrix = get_game_matrix(size, game_array)
-    for row in matrix:
-        print("".join(row))
-    print("")
-
-
 class Player:
     """Player class holding their name and symbol"""
 
     name: str
     symbol: str
+    is_ai: bool
 
-    def __init__(self, name, symbol):
+    def __init__(self, name, symbol, is_ai=False):
         self.name = name
         self.symbol = symbol
+        self.is_ai = is_ai
 
 
 class Game:
@@ -70,18 +56,19 @@ class Game:
     turn: int  # turn number of the game at any given time
     winner: Player  # winner player
 
-    def __init__(self, size: int = 3):
+    def __init__(self, size: int = 3, against_ai: bool = False):
         """
         Create the game.
 
         :param size: size of the game
+        :param against_ai: whether the game is against the computer, in which case player 2 is AI
         """
         self.size = size
         self.turn = 1
         self.num_players = 2
         self.players = [
             Player(name="Player 1", symbol="O"),
-            Player(name="Player 2", symbol="X"),
+            Player(name="Player 2", symbol="X", is_ai=against_ai),
         ]
 
         self.game_array = [" " for i in range(size ** 2)]
@@ -132,6 +119,31 @@ class Game:
             return False
 
 
+def get_game_matrix(game: Game) -> None:
+    matrix = []
+    for i in range(game.size):
+        row = []
+        for j in range(game.size):
+            cell_number = i * game.size + j
+            row.append(f"{cell_number}:{game.game_array[cell_number]}   ")
+        matrix.append(row)
+    return matrix
+
+
+def print_game_matrix(game: Game) -> None:
+    """
+    Pretty prints the current game matrix.
+
+    :param size: Size of the game matrix
+    :param game_array: The game array holding all player turns
+    """
+    print("")
+    matrix = get_game_matrix(game)
+    for row in matrix:
+        print("".join(row))
+    print("")
+
+
 def position_input(prompt: str, game: Game) -> int:
     """
     Ensures that an integer input within the given range of the game array size is accepted.
@@ -165,20 +177,28 @@ def position_input(prompt: str, game: Game) -> int:
         return position_input(prompt, game)
 
 
-def play_game():
-    game = Game(size=3)
+def play_game(against_ai: bool = False):
+    game = Game(size=3, against_ai=against_ai)
 
     while True:
-        print_game_matrix(game.size, game.game_array)
+        print_game_matrix(game)
 
-        position = position_input(
-            prompt=f"Turn of {game.current_player.name}, enter target position [{game.current_player.symbol}]: ",
-            game=game,
-        )
+        if game.current_player.is_ai:
+            available_slots = [
+                idx for idx, value in enumerate(game.game_array) if value == " "
+            ]
+            position = random.choice(available_slots)
+        else:
+            position = position_input(
+                prompt=f"Turn of {game.current_player.name}, enter target position [{game.current_player.symbol}]: ",
+                game=game,
+            )
 
+        print(f"{game.current_player.name} chose position {position}.")
         end_of_game = game.make_move(position)
 
         if end_of_game:
+            print_game_matrix(game)
             if game.winner is not None:
                 print(f"{game.winner.name} wins!")
             else:
@@ -187,4 +207,5 @@ def play_game():
 
 
 if __name__ == "__main__":
-    play_game()
+    args = parser.parse_args()
+    play_game(against_ai=args.against_ai)
