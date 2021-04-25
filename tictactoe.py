@@ -2,6 +2,7 @@ import argparse
 import copy
 import random
 import sqlite3
+from typing import Union
 
 con = sqlite3.connect("tictactoe.db")
 cur = con.cursor()
@@ -42,7 +43,13 @@ def create_winning_patterns(size: int) -> list:
 
 
 def is_winning_move(size, game_array, symbol) -> bool:
-    # check the current game array to see if there is any winning pattern there
+    """
+    Check see if there is any winning pattern for the given symbol
+
+    :param size: size of the game, needed to generate winning patterns
+    :param game_array: game array containing the state of the game
+    :param symbol: symbol to check winning patterns for, e.g. X or O
+    """
     win = False
     for pattern in create_winning_patterns(size):
         if all([game_array[pos] == symbol for pos in pattern]):
@@ -50,11 +57,11 @@ def is_winning_move(size, game_array, symbol) -> bool:
     return win
 
 
-def get_empty_indices(array):
+def get_empty_indices(array: list) -> list:
     return [idx for idx, value in enumerate(array) if value == " "]
 
 
-def get_score_from_db(game_array):
+def get_score_from_db(game_array: list) -> Union[int, None]:
     cur.execute(
         "SELECT * FROM minimax_scores WHERE game_array=:array",
         {"array": str(game_array)},
@@ -66,7 +73,7 @@ def get_score_from_db(game_array):
         return row[1]
 
 
-def set_score_in_db(game_array, score):
+def set_score_in_db(game_array, score) -> None:
     with con:
         con.execute(
             "INSERT INTO minimax_scores (game_array, score) VALUES (:array, :score)",
@@ -78,6 +85,11 @@ MINIMAX_SCORE = {"X": 1, "O": -1, "tie": 0}
 
 
 def minimax(game_array, players, size, is_maximizer):
+    """
+    Find the score for the current state of the game array
+
+    Returns a score based on the current player's symbol.
+    """
     if is_winning_move(size, game_array, players[0].symbol):
         return MINIMAX_SCORE[players[0].symbol]
     elif is_winning_move(size, game_array, players[1].symbol):
@@ -179,7 +191,7 @@ class Game:
             raise ValueError(f"Position out of range [0-{array_size - 1}]: {position}")
         return self.game_array[position] != " "
 
-    def get_winner(self):
+    def get_winner(self) -> Union[Player, None]:
         for player in self.players:
             if is_winning_move(self.size, self.game_array, player.symbol):
                 return self.current_player
@@ -196,7 +208,12 @@ class Game:
             or self.is_array_full()
         )
 
-    def best_move(self):
+    def best_move(self) -> int:
+        """
+        For the current state of the board, find the best move using minimax()
+
+        Returns the index of game_array for the best move
+        """
         game_copy = copy.deepcopy(self)
         move: int = None
         best_score = -9999
