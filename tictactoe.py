@@ -55,6 +55,26 @@ def get_empty_indices(array):
     return [idx for idx, value in enumerate(array) if value == " "]
 
 
+def get_score_from_db(game_array):
+    cur.execute(
+        "SELECT * FROM minimax_scores WHERE game_array=:array",
+        {"array": str(game_array)},
+    )
+    row = cur.fetchone()
+    if row is None:
+        return None
+    else:
+        return row[1]
+
+
+def set_score_in_db(game_array, score):
+    with con:
+        con.execute(
+            "INSERT INTO minimax_scores (game_array, score) VALUES (:array, :score)",
+            {"array": str(game_array), "score": score},
+        )
+
+
 MINIMAX_SCORE = {"X": 1, "O": -1, "tie": 0}
 
 
@@ -72,23 +92,13 @@ def minimax(game_array, players, size, is_maximizer):
             game_array[idx] = players[1].symbol
 
             # check for the score in the database first
-            cur.execute(
-                "SELECT * FROM minimax_scores WHERE game_array=:array",
-                {"array": str(game_array)},
-            )
-            row = cur.fetchone()
+            score = get_score_from_db(game_array)
 
-            if row is None:
+            if score is None:
                 # if not found, minimax it and store it in db
                 score = minimax(game_array, players, size, False)
-                with con:
-                    con.execute(
-                        "INSERT INTO minimax_scores (game_array, score) VALUES (:array, :score)",
-                        {"array": str(game_array), "score": score},
-                    )
-            else:
-                # if found, use it
-                score = row[1]
+                set_score_in_db(game_array, score)
+
             game_array[idx] = " "
             best_score = max(score, best_score)
         return best_score
@@ -96,7 +106,15 @@ def minimax(game_array, players, size, is_maximizer):
         best_score = 9999
         for idx in get_empty_indices(game_array):
             game_array[idx] = players[0].symbol
-            score = minimax(game_array, players, size, True)
+
+            # check for the score in the database first
+            score = get_score_from_db(game_array)
+
+            if score is None:
+                # if not found, minimax it and store it in db
+                score = minimax(game_array, players, size, True)
+                set_score_in_db(game_array, score)
+
             game_array[idx] = " "
             best_score = min(score, best_score)
         return best_score
