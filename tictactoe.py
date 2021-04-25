@@ -1,7 +1,15 @@
 import argparse
 import copy
 import random
+import sqlite3
 
+con = sqlite3.connect("tictactoe.db")
+cur = con.cursor()
+# Create the table if it does not exist
+cur.execute(
+    "CREATE TABLE IF NOT EXISTS minimax_scores (game_array TEXT, score INTEGER)"
+)
+cur.execute("select count(*) from minimax_scores")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--against-ai", help="play against AI", action="store_true")
@@ -61,7 +69,25 @@ def minimax(game_array, players, size, is_maximizer):
         best_score = -9999
         for idx in get_empty_indices(game_array):
             game_array[idx] = players[1].symbol
-            score = minimax(game_array, players, size, False)
+
+            # check for the score in the database first
+            cur.execute(
+                "SELECT * FROM minimax_scores WHERE game_array=:array",
+                {"array": str(game_array)},
+            )
+            row = cur.fetchone()
+
+            if row is None:
+                # if not found, minimax it and store it in db
+                score = minimax(game_array, players, size, False)
+                with con:
+                    con.execute(
+                        "INSERT INTO minimax_scores (game_array, score) VALUES (:array, :score)",
+                        {"array": str(game_array), "score": score},
+                    )
+            else:
+                # if found, use it
+                score = row[1]
             game_array[idx] = " "
             best_score = max(score, best_score)
         return best_score
@@ -197,7 +223,7 @@ class Game:
             row = []
             for j in range(self.size):
                 cell_number = i * self.size + j
-                row.append(f"{cell_number}:{self.game_array[cell_number]}   ")
+                row.append(f"{cell_number}: {self.game_array[cell_number]}   ")
             matrix.append(row)
         return matrix
 
