@@ -1,10 +1,6 @@
 import pytest
 
-from tictactoe import (
-    Player,
-    Game,
-    create_winning_patterns,
-)
+from tictactoe import Player, Game, create_winning_patterns, is_winning_move
 
 
 def test_create_winning_patterns():
@@ -42,6 +38,28 @@ def test_create_winning_patterns():
         [0, 7, 14, 21, 28, 35],
         [5, 10, 15, 20, 25, 30],
     ]
+
+
+def test_is_winning_move():
+    # fmt: off
+    game_array = [
+        'O', 'O', 'O',  #
+        ' ', 'X', ' ',
+        'X', ' ', ' ',
+    ]
+    # fmt: on
+    assert is_winning_move(3, game_array, "O")
+    assert not is_winning_move(3, game_array, "X")
+
+    # fmt: off
+    game_array = [
+        'O', 'O', 'X',
+        ' ', 'X', 'O',
+        'X', ' ', ' ',
+    ]
+    # fmt: on
+    assert not is_winning_move(3, game_array, "O")
+    assert is_winning_move(3, game_array, "X")
 
 
 def test_game():
