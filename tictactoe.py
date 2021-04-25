@@ -6,9 +6,10 @@ import sqlite3
 con = sqlite3.connect("tictactoe.db")
 cur = con.cursor()
 # Create the table if it does not exist
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS minimax_scores (game_array TEXT, score INTEGER)"
-)
+with con:
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS minimax_scores (game_array TEXT, score INTEGER)"
+    )
 cur.execute("select count(*) from minimax_scores")
 
 parser = argparse.ArgumentParser()
