@@ -1,4 +1,5 @@
 import argparse
+import copy
 import random
 
 
@@ -32,6 +33,39 @@ def create_winning_patterns(size: int) -> list:
     return patterns
 
 
+def empty_cells(array):
+    return [idx for idx, value in enumerate(array) if value == " "]
+
+
+MINIMAX_SCORE = {"X": 10, "O": -10, "tie": 0}
+
+
+def minimax(game, depth, is_maximizer):
+    if depth == 0 or game.is_winning_move():
+        if game.get_winner() is not None:
+            return MINIMAX_SCORE[game.winner.symbol]
+        else:
+            return MINIMAX_SCORE["tie"]
+
+    if is_maximizer:
+        best_score = -9999
+        for idx in empty_cells(game.game_array):
+            game.make_move(idx)
+            score = minimax(game, depth - 1, False)
+            game.clear_spot(idx)
+            best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = 9999
+        assert game.current_player == game.players[0]
+        for idx in empty_cells(game.game_array):
+            game.make_move(idx)
+            score = minimax(game, depth - 1, True)
+            game.clear_spot(idx)
+            best_score = min(score, best_score)
+        return best_score
+
+
 class Player:
     """Player class holding their name and symbol"""
 
@@ -43,6 +77,9 @@ class Player:
         self.name = name
         self.symbol = symbol
         self.is_ai = is_ai
+
+    def __str__(self):
+        return f"{self.name} [{self.symbol}]"
 
 
 class Game:
@@ -78,10 +115,13 @@ class Game:
     @property
     def current_player(self) -> Player:
         # player who will play the current turn
-        return self.players[(self.turn % len(self.players)) - 1]
+        return self.players[(self.turn % self.num_players) - 1]
 
     def is_position_taken(self, position: int) -> bool:
+        array_size = len(self.game_array)
         # Check if the given position is taken
+        if position >= array_size:
+            raise ValueError(f"Position out of range [0-{array_size - 1}]: {position}")
         return self.game_array[position] != " "
 
     def is_winning_move(self) -> bool:
@@ -92,12 +132,39 @@ class Game:
                 [self.game_array[pos] == self.current_player.symbol for pos in pattern]
             ):
                 win = True
-                self.winner = self.current_player
         return win
+
+    def get_winner(self):
+        if self.is_winning_move():
+            return self.current_player
+        else:
+            return None
 
     def is_end_of_game(self) -> bool:
         # Checks if there is a winning pattern or if all the position has been played
         return self.is_winning_move() or all([pos != " " for pos in self.game_array])
+
+    def best_move(self):
+        game_copy = copy.deepcopy(self)
+        move: int
+        best_score = -9999
+        cells = empty_cells(game_copy.game_array)
+        for idx in cells:
+            end_of_game = game_copy.make_move(idx)
+            if end_of_game:
+                move = idx
+            else:
+                score = minimax(game_copy, len(cells), True)
+                game_copy.clear_spot(idx)
+                print(f"position {idx}, score {score}")
+                if score > best_score:
+                    best_score = score
+                    move = idx
+        return move
+
+    def clear_spot(self, position: int):
+        self.game_array[position] = " "
+        self.turn -= 1
 
     def make_move(self, position: int) -> bool:
         """
@@ -112,36 +179,34 @@ class Game:
             raise MoveException("Position already taken")
         self.game_array[position] = self.current_player.symbol
 
-        if self.is_end_of_game():
-            return True
-        else:
+        if not self.is_end_of_game():
             self.turn += 1
             return False
+        else:
+            return True
 
+    def get_game_matrix(self) -> None:
+        matrix = []
+        for i in range(self.size):
+            row = []
+            for j in range(self.size):
+                cell_number = i * self.size + j
+                row.append(f"{cell_number}:{self.game_array[cell_number]}   ")
+            matrix.append(row)
+        return matrix
 
-def get_game_matrix(game: Game) -> None:
-    matrix = []
-    for i in range(game.size):
-        row = []
-        for j in range(game.size):
-            cell_number = i * game.size + j
-            row.append(f"{cell_number}:{game.game_array[cell_number]}   ")
-        matrix.append(row)
-    return matrix
+    def print_game_matrix(self) -> None:
+        """
+        Pretty prints the current game matrix.
 
-
-def print_game_matrix(game: Game) -> None:
-    """
-    Pretty prints the current game matrix.
-
-    :param size: Size of the game matrix
-    :param game_array: The game array holding all player turns
-    """
-    print("")
-    matrix = get_game_matrix(game)
-    for row in matrix:
-        print("".join(row))
-    print("")
+        :param size: Size of the game matrix
+        :param game_array: The game array holding all player turns
+        """
+        print("")
+        matrix = self.get_game_matrix()
+        for row in matrix:
+            print("".join(row))
+        print("")
 
 
 def position_input(prompt: str, game: Game) -> int:
@@ -181,13 +246,10 @@ def play_game(against_ai: bool = False):
     game = Game(size=3, against_ai=against_ai)
 
     while True:
-        print_game_matrix(game)
+        game.print_game_matrix()
 
         if game.current_player.is_ai:
-            available_slots = [
-                idx for idx, value in enumerate(game.game_array) if value == " "
-            ]
-            position = random.choice(available_slots)
+            position = game.best_move()
         else:
             position = position_input(
                 prompt=f"Turn of {game.current_player.name}, enter target position [{game.current_player.symbol}]: ",
@@ -198,12 +260,14 @@ def play_game(against_ai: bool = False):
         end_of_game = game.make_move(position)
 
         if end_of_game:
-            print_game_matrix(game)
-            if game.winner is not None:
-                print(f"{game.winner.name} wins!")
+            game.print_game_matrix()
+            winner = self.get_winner()
+            if winner is not None:
+                print(f"{winner.name} wins!")
+                break
             else:
                 print("\nNo winner! Play again.")
-            break
+                break
 
 
 if __name__ == "__main__":

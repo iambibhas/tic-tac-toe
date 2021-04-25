@@ -1,9 +1,9 @@
+import pytest
+
 from tictactoe import (
     Player,
     Game,
     create_winning_patterns,
-    get_game_matrix,
-    print_game_matrix,
 )
 
 
@@ -42,3 +42,27 @@ def test_create_winning_patterns():
         [0, 7, 14, 21, 28, 35],
         [5, 10, 15, 20, 25, 30],
     ]
+
+
+def test_game():
+    game = Game()
+    assert not game.make_move(0)  # player 1
+    assert not game.make_move(4)  # player 2
+    assert not game.make_move(1)  # player 1
+    assert not game.make_move(5)  # player 2
+    assert game.make_move(2)  # player 1
+    assert game.get_winner() == game.players[0]
+
+    game2 = Game()
+
+    # Cannot make a move to a position outside the game array limit
+    with pytest.raises(ValueError):
+        game2.make_move(123)
+
+    assert not game2.make_move(0)  # player 1
+    assert not game2.make_move(3)  # player 2
+    assert not game2.make_move(1)  # player 1
+    assert not game2.make_move(4)  # player 2
+    assert not game2.make_move(8)  # player 1
+    assert game2.make_move(5)  # player 2
+    assert game2.get_winner() == game2.players[1]
