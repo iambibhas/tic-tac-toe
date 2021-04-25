@@ -65,11 +65,20 @@ def test_is_winning_move():
 def test_game():
     game = Game()
     assert not game.make_move(0)  # player 1
+
+    assert game.is_position_taken(0)
+    with pytest.raises(ValueError):
+        assert game.is_position_taken(200)
+
+    assert game.current_player == game.players[1]
     assert not game.make_move(4)  # player 2
+
     assert not game.make_move(1)  # player 1
     assert not game.make_move(5)  # player 2
     assert game.make_move(2)  # player 1
     assert game.get_winner() == game.players[0]
+    assert game.is_end_of_game()
+    assert not game.is_array_full()
 
     game2 = Game()
 
@@ -84,3 +93,5 @@ def test_game():
     assert not game2.make_move(8)  # player 1
     assert game2.make_move(5)  # player 2
     assert game2.get_winner() == game2.players[1]
+    assert game.is_end_of_game()
+    assert not game.is_array_full()

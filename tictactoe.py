@@ -78,17 +78,19 @@ def minimax(game_array, players, size, is_maximizer):
 class Player:
     """Player class holding their name and symbol"""
 
-    name: str
     symbol: str
     is_ai: bool
 
-    def __init__(self, name, symbol, is_ai=False):
-        self.name = name
+    def __init__(self, symbol, is_ai=False):
         self.symbol = symbol
         self.is_ai = is_ai
 
     def __str__(self):
-        return f"{self.name} [{self.symbol}]"
+        return self.name
+
+    @property
+    def name(self):
+        return f"Player {self.symbol}"
 
 
 class Game:
@@ -113,8 +115,8 @@ class Game:
         self.turn = 1
         self.num_players = 2
         self.players = [
-            Player(name="Player 1", symbol="O"),
-            Player(name="Player 2", symbol="X", is_ai=against_ai),
+            Player(symbol="O"),
+            Player(symbol="X", is_ai=against_ai),
         ]
 
         self.game_array = [" " for i in range(size ** 2)]
@@ -134,8 +136,9 @@ class Game:
         return self.game_array[position] != " "
 
     def get_winner(self):
-        if is_winning_move(self.size, self.game_array, self.current_player.symbol):
-            return self.current_player
+        for player in self.players:
+            if is_winning_move(self.size, self.game_array, player.symbol):
+                return self.current_player
         else:
             return None
 
@@ -160,7 +163,6 @@ class Game:
                 game_copy.game_array, game_copy.players, game_copy.size, False
             )
             game_copy.clear_spot(idx)
-            print(f"position {idx}, score {score}")
             if score > best_score:
                 best_score = score
                 move = idx
