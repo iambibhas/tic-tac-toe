@@ -33,35 +33,44 @@ def create_winning_patterns(size: int) -> list:
     return patterns
 
 
-def empty_cells(array):
+def is_winning_move(size, game_array, symbol) -> bool:
+    # check the current game array to see if there is any winning pattern there
+    win = False
+    for pattern in create_winning_patterns(size):
+        if all([game_array[pos] == symbol for pos in pattern]):
+            win = True
+    return win
+
+
+def get_empty_indices(array):
     return [idx for idx, value in enumerate(array) if value == " "]
 
 
-MINIMAX_SCORE = {"X": 10, "O": -10, "tie": 0}
+MINIMAX_SCORE = {"X": 1, "O": -1, "tie": 0}
 
 
-def minimax(game, depth, is_maximizer):
-    if depth == 0 or game.is_winning_move():
-        if game.get_winner() is not None:
-            return MINIMAX_SCORE[game.winner.symbol]
-        else:
-            return MINIMAX_SCORE["tie"]
+def minimax(game_array, players, size, is_maximizer):
+    if is_winning_move(size, game_array, players[0].symbol):
+        return MINIMAX_SCORE[players[0].symbol]
+    elif is_winning_move(size, game_array, players[1].symbol):
+        return MINIMAX_SCORE[players[1].symbol]
+    elif get_empty_indices(game_array) == []:
+        return MINIMAX_SCORE["tie"]
 
     if is_maximizer:
         best_score = -9999
-        for idx in empty_cells(game.game_array):
-            game.make_move(idx)
-            score = minimax(game, depth - 1, False)
-            game.clear_spot(idx)
+        for idx in get_empty_indices(game_array):
+            game_array[idx] = players[1].symbol
+            score = minimax(game_array, players, size, False)
+            game_array[idx] = " "
             best_score = max(score, best_score)
         return best_score
     else:
         best_score = 9999
-        assert game.current_player == game.players[0]
-        for idx in empty_cells(game.game_array):
-            game.make_move(idx)
-            score = minimax(game, depth - 1, True)
-            game.clear_spot(idx)
+        for idx in get_empty_indices(game_array):
+            game_array[idx] = players[0].symbol
+            score = minimax(game_array, players, size, True)
+            game_array[idx] = " "
             best_score = min(score, best_score)
         return best_score
 
@@ -124,42 +133,37 @@ class Game:
             raise ValueError(f"Position out of range [0-{array_size - 1}]: {position}")
         return self.game_array[position] != " "
 
-    def is_winning_move(self) -> bool:
-        # check the current game array to see if there is any winning pattern there
-        win = False
-        for pattern in self.winning_patterns:
-            if all(
-                [self.game_array[pos] == self.current_player.symbol for pos in pattern]
-            ):
-                win = True
-        return win
-
     def get_winner(self):
-        if self.is_winning_move():
+        if is_winning_move(self.size, self.game_array, self.current_player.symbol):
             return self.current_player
         else:
             return None
 
+    def is_array_full(self):
+        return all([pos != " " for pos in self.game_array])
+
     def is_end_of_game(self) -> bool:
         # Checks if there is a winning pattern or if all the position has been played
-        return self.is_winning_move() or all([pos != " " for pos in self.game_array])
+        return (
+            is_winning_move(self.size, self.game_array, self.current_player.symbol)
+            or self.is_array_full()
+        )
 
     def best_move(self):
         game_copy = copy.deepcopy(self)
-        move: int
+        move: int = None
         best_score = -9999
-        cells = empty_cells(game_copy.game_array)
-        for idx in cells:
+        empty_cells = get_empty_indices(game_copy.game_array)
+        for idx in empty_cells:
             end_of_game = game_copy.make_move(idx)
-            if end_of_game:
+            score = minimax(
+                game_copy.game_array, game_copy.players, game_copy.size, False
+            )
+            game_copy.clear_spot(idx)
+            print(f"position {idx}, score {score}")
+            if score > best_score:
+                best_score = score
                 move = idx
-            else:
-                score = minimax(game_copy, len(cells), True)
-                game_copy.clear_spot(idx)
-                print(f"position {idx}, score {score}")
-                if score > best_score:
-                    best_score = score
-                    move = idx
         return move
 
     def clear_spot(self, position: int):
@@ -261,7 +265,7 @@ def play_game(against_ai: bool = False):
 
         if end_of_game:
             game.print_game_matrix()
-            winner = self.get_winner()
+            winner = game.get_winner()
             if winner is not None:
                 print(f"{winner.name} wins!")
                 break
