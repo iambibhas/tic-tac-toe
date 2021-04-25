@@ -10,7 +10,6 @@ with con:
     con.execute(
         "CREATE TABLE IF NOT EXISTS minimax_scores (game_array TEXT, score INTEGER)"
     )
-cur.execute("select count(*) from minimax_scores")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--against-ai", help="play against AI", action="store_true")
