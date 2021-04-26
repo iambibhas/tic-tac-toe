@@ -170,6 +170,7 @@ class Game:
         self.num_players = 2
         self.players = [
             Player(symbol="X", minimax_score=-1),
+            # assuming that player 2 is the AI player in AI mode
             Player(symbol="O", minimax_score=1, is_ai=against_ai),
         ]
 
