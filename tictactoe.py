@@ -21,6 +21,26 @@ class MoveException(Exception):
     pass
 
 
+def get_score_from_db(game_array: list) -> Union[int, None]:
+    cur.execute(
+        "SELECT * FROM minimax_scores WHERE game_array=:array",
+        {"array": str(game_array)},
+    )
+    row = cur.fetchone()
+    if row is None:
+        return None
+    else:
+        return row[1]
+
+
+def set_score_in_db(game_array, score) -> None:
+    with con:
+        con.execute(
+            "INSERT INTO minimax_scores (game_array, score) VALUES (:array, :score)",
+            {"array": str(game_array), "score": score},
+        )
+
+
 def create_winning_patterns(size: int) -> list:
     """
     Given the size of the game matrix, returns the list of winning patterns.
@@ -59,26 +79,6 @@ def is_winning_move(size, game_array, symbol) -> bool:
 
 def get_empty_indices(array: list) -> list:
     return [idx for idx, value in enumerate(array) if value == " "]
-
-
-def get_score_from_db(game_array: list) -> Union[int, None]:
-    cur.execute(
-        "SELECT * FROM minimax_scores WHERE game_array=:array",
-        {"array": str(game_array)},
-    )
-    row = cur.fetchone()
-    if row is None:
-        return None
-    else:
-        return row[1]
-
-
-def set_score_in_db(game_array, score) -> None:
-    with con:
-        con.execute(
-            "INSERT INTO minimax_scores (game_array, score) VALUES (:array, :score)",
-            {"array": str(game_array), "score": score},
-        )
 
 
 MINIMAX_SCORE = {"X": 1, "O": -1, "tie": 0}
