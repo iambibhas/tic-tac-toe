@@ -28,13 +28,11 @@ pytest
 
 ### Assumptions
 - 2 player game, 3x3 board
+- In the AI mode, Player 2 is assumed to be the AI
 - There are 8 winning patterns for a 3x3 board
   - 10 winning patterns for 4x4. essentially, for a square of size `n`, there are `n*2+2` winning patterns
-  - can these patterns be auto generated given the size of the square?
-- Players take turn to play
-  - if player X starts the game against player Y, any time it's the turn of player X, the number of cells occupied by Y must be one less than cells occupied by Y.
-  - If it's the turn of Y, the number of cells occupied by X must be one more than the cells occupied by Y
-  - one player cannot play two consecutive turns
+  - these patterns can be auto generated given the size of the square
+- Players take turn to play, one player cannot play two consecutive turns
 - The game ends when one player has occupied a winning patterns, no further input allowed
-- Once a cell is occupied, it is immutable
+- Once a cell is occupied, it is immutable, picking that posistion will ask for valid input
 - When it's the turn of player X, player Y cannot send an input, the board has to be locked for Y
