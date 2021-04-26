@@ -258,7 +258,7 @@ class Game:
             row = []
             for j in range(self.size):
                 cell_number = i * self.size + j
-                row.append(f"{cell_number}: {self.game_array[cell_number]}   ")
+                row.append(f"{cell_number}: {self.game_array[cell_number]}  |")
             matrix.append(row)
         return matrix
 
@@ -273,6 +273,7 @@ class Game:
         matrix = self.get_game_matrix()
         for row in matrix:
             print("".join(row))
+            print("+".join(["------" for _ in range(self.size)]), end="+\n")
         print("")
 
 
