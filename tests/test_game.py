@@ -64,8 +64,8 @@ def test_is_winning_move():
 
 def test_game():
     game = Game()
-    assert game.players[0].name == "Player O"
-    assert game.players[1].name == "Player X"
+    assert game.players[0].name == "Player X"
+    assert game.players[1].name == "Player O"
 
     assert not game.make_move(0)  # player 1
 

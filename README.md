@@ -27,8 +27,7 @@ pytest
 ```
 
 ### Assumptions
-- 2 player game
-  - can it support 2+ players? maybe for bigger matrix than 3x3
+- 2 player game, 3x3 board
 - There are 8 winning patterns for a 3x3 board
   - 10 winning patterns for 4x4. essentially, for a square of size `n`, there are `n*2+2` winning patterns
   - can these patterns be auto generated given the size of the square?

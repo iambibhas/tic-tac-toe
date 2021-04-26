@@ -81,9 +81,6 @@ def get_empty_indices(array: list) -> list:
     return [idx for idx, value in enumerate(array) if value == " "]
 
 
-MINIMAX_SCORE = {"X": 1, "O": -1, "tie": 0}
-
-
 def minimax(game_array, players, size, is_maximizer):
     """
     Find the score for the current state of the game array
@@ -91,17 +88,16 @@ def minimax(game_array, players, size, is_maximizer):
     Returns a score based on the current player's symbol.
     """
     if is_winning_move(size, game_array, players[0].symbol):
-        return MINIMAX_SCORE[players[0].symbol]
+        return players[0].minimax_score
     elif is_winning_move(size, game_array, players[1].symbol):
-        return MINIMAX_SCORE[players[1].symbol]
+        return players[1].minimax_score
     elif get_empty_indices(game_array) == []:
-        return MINIMAX_SCORE["tie"]
+        return 0
 
     if is_maximizer:
         best_score = -9999
         for idx in get_empty_indices(game_array):
-            game_array[idx] = players[1].symbol
-
+            game_array[idx] = players[1].symbol  # Assumed that Player 2 is AI
             # check for the score in the database first
             score = get_score_from_db(game_array)
 
@@ -135,11 +131,13 @@ class Player:
     """Player class holding their name and symbol"""
 
     symbol: str
+    minimax_score: int
     is_ai: bool
 
-    def __init__(self, symbol, is_ai=False):
+    def __init__(self, symbol, minimax_score, is_ai=False):
         self.symbol = symbol
         self.is_ai = is_ai
+        self.minimax_score = minimax_score
 
     def __str__(self):
         return self.name
@@ -171,8 +169,8 @@ class Game:
         self.turn = 1
         self.num_players = 2
         self.players = [
-            Player(symbol="O"),
-            Player(symbol="X", is_ai=against_ai),
+            Player(symbol="X", minimax_score=-1),
+            Player(symbol="O", minimax_score=1, is_ai=against_ai),
         ]
 
         self.game_array = [" " for i in range(size ** 2)]
