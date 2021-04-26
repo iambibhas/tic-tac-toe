@@ -36,3 +36,13 @@ pytest
 - The game ends when one player has occupied a winning patterns, no further input allowed
 - Once a cell is occupied, it is immutable, picking that posistion will ask for valid input
 - When it's the turn of player X, player Y cannot send an input, the board has to be locked for Y
+
+
+### Limitations
+- Some of the code is written to optimize for a 3x3 game, e.g.
+  - the minimax function doesn't consider the depth of search, it searches everything
+  - to accommdate a larger board, a depth parameter can be added to the search algorithm, so that it makes a reasonably well thought play, if not optimal
+  - have not tried it, but I think the depth param can be also configured to create a difficulty setting, in lower difficulty, the minimax algorithm will search lower amount of depth and vice versa
+- the minimax function assumes one player is a real person. Can't accommodate 2 Ai players playing against each other right now.
+  - in the current version of the code, player X is always the minimizer and player O is always the maximizer
+  - to accommodate 2 AI players playing each other, the minimax function will need to accept a `current_player` argument and create a new state where the current player will be the maximizer and the other player will be the minimizer
