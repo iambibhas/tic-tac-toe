@@ -46,3 +46,27 @@ pytest
 - the minimax function assumes one player is a real person. Can't accommodate 2 Ai players playing against each other right now.
   - in the current version of the code, player X is always the minimizer and player O is always the maximizer
   - to accommodate 2 AI players playing each other, the minimax function will need to accept a `current_player` argument and create a new state where the current player will be the maximizer and the other player will be the minimizer
+
+
+# 2 player mechanism
+- game: id, created_at
+- game_move: id, game_id integer, player char(1), position integer, board text
+
+- state: last player, last move, board after the move, status of the board
+
+- game will have a start(-x) or join(-o) game mode
+- X starts the game, game record is created in db and an ID is returned
+- X shares the game ID with O
+- O enters the ID, waits for update from the db, input prompt is disabled
+- The input prompt is enabled for X
+- X enters position
+- check if it's an winning move
+  - if yes, print win message, end the game
+  - if not, X enters position
+- update the state in db
+- goes into wait mode
+- O receives the db update
+- the updated game matrix is printed
+- if there is a winning move move from X,
+  - if yes, print win message, end game,
+  - if not, input prompt is enabled for O

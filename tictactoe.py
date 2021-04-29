@@ -1,6 +1,8 @@
 import argparse
 import copy
+from datetime import datetime
 import random
+import json
 import sqlite3
 from typing import Union
 
@@ -11,10 +13,23 @@ with con:
     con.execute(
         "CREATE TABLE IF NOT EXISTS minimax_scores (game_array TEXT, score INTEGER)"
     )
+    con.execute("CREATE TABLE IF NOT EXISTS game (created_at INTEGER)")
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS game_move (
+            game_id INTEGER,
+            player TEXT,
+            position INTEGER,
+            game_array TEXT,
+            FOREIGN KEY (game_id) REFERENCES game(rowid)
+        )"""
+    )
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--against-ai", help="play against AI", action="store_true")
-parser.parse_args()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-x", "--server", action="store_true")
+group.add_argument("-o", "--client", action="store_true")
 
 
 class MoveException(Exception):
@@ -157,26 +172,59 @@ class Game:
     num_players: int  # number of players
     turn: int  # turn number of the game at any given time
     winner: Player  # winner player
+    game_id: int
+    against_ai: bool
 
-    def __init__(self, size: int = 3, against_ai: bool = False):
+    def __init__(self, game_id: int, against_ai: bool = False):
         """
         Create the game.
 
         :param size: size of the game
         :param against_ai: whether the game is against the computer, in which case player 2 is AI
         """
-        self.size = size
-        self.turn = 1
+        self.against_ai = against_ai
+        self.size = 3
+        self.game_array = [" " for i in range(size ** 2)]
         self.num_players = 2
         self.players = [
             Player(symbol="X", minimax_score=-1),
             # assuming that player 2 is the AI player in AI mode
             Player(symbol="O", minimax_score=1, is_ai=against_ai),
         ]
-
-        self.game_array = [" " for i in range(size ** 2)]
         self.winning_patterns = create_winning_patterns(size)
         self.winner = None
+        self.turn = 1
+
+        if not against_ai:
+            if game_id is None:
+                # create game and fetch last move
+                cur.execute(
+                    "insert into game (created_at) values (:created_at)",
+                    {"created_at": datetime.now().timestamp()},
+                )
+                self.game_id = cur.lastrowid
+                self.turn = 1
+            else:
+                # fetch last move
+                cur.execute("select count(*) from game where rowid=:rowid")
+                game_obj = cur.fetchone()
+                if game_obj is None:
+                    raise ValueError("Game ID does not exist")
+
+                self.game_id = game_id
+
+    def get_game_state(self):
+        if against_ai:
+            return self.game_array
+        else:
+            cur.execute(
+                "select rowid, game_array from game_move where game_id=:game_id order by rowid desc limit 1"
+            )
+            game_state = cur.fetchone()
+            if game_state is None:
+                return self.game_array
+            else:
+                pass
 
     @property
     def current_player(self) -> Player:
@@ -309,8 +357,8 @@ def position_input(prompt: str, game: Game) -> int:
         return position_input(prompt, game)
 
 
-def play_game(against_ai: bool = False):
-    game = Game(size=3, against_ai=against_ai)
+def play_against_ai():
+    game = Game(size=3, against_ai=True)
 
     while True:
         game.print_game_matrix()
@@ -337,6 +385,16 @@ def play_game(against_ai: bool = False):
                 break
 
 
+def play_game():
+    pass
+
+
 if __name__ == "__main__":
     args = parser.parse_args()
-    play_game(against_ai=args.against_ai)
+    if args.server:
+        print("Server mode selected")
+    elif args.client:
+        print("Client mode selected")
+    else:
+        print("You need to chose a server or client mode")
+    # play_game(against_ai=args.against_ai)
